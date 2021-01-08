@@ -1,0 +1,62 @@
+# Template file for 'helios4-uboot'
+pkgname=helios4-uboot
+version=2018.11
+revision=1
+wrksrc="u-boot-${version}"
+hostmakedepends="bison flex bc libressl-devel uboot-mkimage"
+short_desc="Helios4 das U-Boot loader for the sd card"
+maintainer="digital <didev@dinid.net>"
+license="GPL-2.0-or-later"
+homepage="http://www.denx.de/wiki/U-Boot/WebHome"
+distfiles="https://github.com/kobol-io/u-boot/archive/v${version}.tar.gz"
+checksum=33b5cf99bac91d678ed6708be7b7cbbed36c45eb071e6228f83c25ad3a1de13a
+patch_args="-Np1"
+
+archs="armv7l*"
+
+do_build() {
+	unset CFLAGS CXXFLAGS LDFLAGS
+
+	for flash in no yes; do
+		if [ "$CROSS_BUILD" ]; then
+			make CROSS_COMPILE=${XBPS_CROSS_TRIPLET}- helios4_defconfig
+		else
+			make helios4_defconfig
+		fi
+
+		if test ${flash} == "yes"; then
+			mv -f .config .config_mmc
+
+			awk '{\
+			gsub(/CONFIG_MVEBU_SPL_BOOT_DEVICE_MMC=y/,"# CONFIG_MVEBU_SPL_BOOT_DEVICE_MMC is not set");\
+			gsub(/# CONFIG_MVEBU_SPL_BOOT_DEVICE_SPI is not set/,"CONFIG_MVEBU_SPL_BOOT_DEVICE_SPI=y");\
+			gsub(/CONFIG_ENV_IS_IN_MMC=y/,"# CONFIG_ENV_IS_IN_MMC is not set");\
+			gsub(/# CONFIG_ENV_IS_IN_SPI_FLASH is not set/,"CONFIG_ENV_IS_IN_SPI_FLASH=y");\
+			}1' .config_mmc >> .config
+
+			rm -f .config_mmc
+		fi
+
+		if [ "$CROSS_BUILD" ]; then
+			make CROSS_COMPILE=${XBPS_CROSS_TRIPLET}- olddefconfig
+			make CROSS_COMPILE=${XBPS_CROSS_TRIPLET}- ${makejobs}
+		else
+			make olddefconfig
+			make ${makejobs}
+		fi
+		if test ${flash} == "yes"; then
+			mv u-boot-spl.kwb u-boot-spl-spinorflash.kwb
+		else
+			mv u-boot-spl.kwb u-boot-spl-sdcard.kwb
+		fi
+		ls -lah
+	done
+	mkimage -C none -A arm -T script -d ${FILESDIR}/boot.cmd boot.scr
+
+}
+do_install() {
+	vinstall u-boot-spl-sdcard.kwb 644 boot
+	vinstall u-boot-spl-spinorflash.kwb 644 boot
+	vinstall boot.scr 644 boot
+	vinstall ${FILESDIR}/uboot-env.txt 644 boot
+}

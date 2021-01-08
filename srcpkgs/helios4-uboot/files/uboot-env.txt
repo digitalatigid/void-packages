@@ -1,0 +1,13 @@
+# name of the initramfs file relative to the directory of this file. no
+# initramfs is used if this variable is not set.
+#initrd=initramfs.img
+
+# extra arguments passed to the kernel cmdline
+#extraargs=
+
+# enables spi nor flash access but disables sata.
+# (https://wiki.kobol.io/helios4/spi/)
+#spi_workaround=on
+
+# eMMC compatibility fix
+#emmc_fix=on

@@ -1,0 +1,32 @@
+# Template file for 'helios4-uboot'
+pkgname=helios4-uboot
+version=2018.11
+revision=1
+wrksrc="u-boot-${version}"
+hostmakedepends="bison flex bc libressl-devel uboot-mkimage"
+short_desc="Helios4 das U-Boot loader for the sd card"
+maintainer="digital <didev@dinid.net>"
+license="GPL-2.0-or-later"
+homepage="http://www.denx.de/wiki/U-Boot/WebHome"
+distfiles="https://github.com/kobol-io/u-boot/archive/v${version}.tar.gz"
+checksum=33b5cf99bac91d678ed6708be7b7cbbed36c45eb071e6228f83c25ad3a1de13a
+patch_args="-Np1"
+
+archs="armv7l*"
+
+do_build() {
+	unset CFLAGS CXXFLAGS LDFLAGS
+        local cross
+	if [ "$CROSS_BUILD" ]; then
+		cross=CROSS_COMPILE=${XBPS_CROSS_TRIPLET}-
+	fi
+	make ${cross} helios4_defconfig
+	make ${cross} ${makejobs}
+	mkimage -C none -A arm -T script -d ${FILESDIR}/boot.cmd boot.scr
+}
+do_install() {
+	ls
+	vinstall u-boot-spl.kwb 644 boot u-boot-spl-sdcard.kwb
+	vinstall boot.scr 644 boot
+	vinstall ${FILESDIR}/uboot-env.txt 644 boot
+}

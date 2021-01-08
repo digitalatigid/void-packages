@@ -1,0 +1,19 @@
+# Template file for 'helios4-base'
+pkgname=helios4-base
+version=1.0
+revision=1
+hostmakedepends=""
+makedepends=""
+depends="helios4-kernel helios4-uboot lm_sensors"
+short_desc="Helios4 base files"
+maintainer="digital <didev@dinid.net>"
+license="GPL-3.0-or-later"
+homepage="https://wiki.kobol.io/helios4/intro/"
+
+archs="armv7l"
+
+do_install() {
+        vinstall ${FILESDIR}/50-helios4-fan.rules 644 /usr/lib/udev/rules.d.
+        vinstall ${FILESDIR}/fancontrol 644 etc/
+        vsv agetty-ttyS0
+}
